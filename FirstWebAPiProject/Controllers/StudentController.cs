@@ -1,6 +1,5 @@
 ﻿using FirstClassLibrary;
 using FirstClassLibrary.Entity;
-using FirstWebAPiProject.Data;
 using FirstWebAPiProject.Model.Dto;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,7 +7,7 @@ namespace FirstWebAPiProject.Controllers
 {
     [ApiController]
     [Route("api/StudentApi")]
-    public class StudentController:ControllerBase
+    public class StudentController : ControllerBase
     {
         private readonly DataContext dataContext;
 
@@ -18,23 +17,23 @@ namespace FirstWebAPiProject.Controllers
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<IEnumerable<StudentDto>> GetStudentList()
+        public ActionResult<IEnumerable<Student>> GetStudentList()
         {
             return Ok(dataContext.Students);
         }
 
-        [HttpGet("id:int",Name ="GetStudent")]
+        [HttpGet("id:int", Name = "GetStudent")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<StudentDto> GetStudentList(int id)
+        public ActionResult<Student> GetStudentList(int id)
         {
-            if(id == 0)
+            if (id == 0)
             {
                 return BadRequest();
             }
             var studnet = dataContext.Students.FirstOrDefault(x => x.Id == id);
-            if(studnet == null)
+            if (studnet == null)
             {
                 return NotFound();
             }
@@ -45,66 +44,69 @@ namespace FirstWebAPiProject.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public ActionResult<StudentDto> CreateStudent([FromBody]StudentDto student)
+        public ActionResult<StudentDto> CreateStudent([FromBody] StudentDto student)
         {
             if (student == null)
             {
                 return BadRequest(student);
             }
-            if(student.Id < 0)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError);
-            }
             //student.Id = StudentStore.studentList.OrderByDescending(x => x.Id).FirstOrDefault().Id+1;
-
-            var studentabc = new Student()
+            if(!ModelState.IsValid)
             {
+                return BadRequest();
+            }
+            var NewStudent = new Student()
+            {
+                Id = dataContext.Students.OrderByDescending(x => x.Id).FirstOrDefault().Id + 1,
                 Name = student.Name,
                 PhoneNo = student.PhoneNo,
+                Password = student.Password,
+                ConfirmPassword = student.ConfirmPassword,
+                Age = student.Age
             };
 
-            dataContext.Students.Add(studentabc);
+            dataContext.Students.Add(NewStudent);
             dataContext.SaveChanges();
-            return CreatedAtRoute("GetStudent",new { id = student.Id } , student);
+            return Ok(student);
         }
 
         [HttpDelete]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult DeleteStudent(int id) { 
-            if(id<0)
+        public ActionResult DeleteStudent(int id) {
+            if (id < 0)
             {
                 return BadRequest();
             }
-            var student = dataContext.Students.FirstOrDefault(x=>x.Id==id);
-            if(student == null)
+            var student = dataContext.Students.FirstOrDefault(x => x.Id == id);
+            if (student == null)
             {
                 return NotFound(student);
             }
             dataContext.Students.Remove(student);
             dataContext.SaveChanges();
-            return Ok(student); 
+            return Ok(student);
         }
 
-        [HttpPut]
+        [HttpPut("id:int")]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult UpdateStudent([FromBody] StudentDto student)
+        public ActionResult UpdateStudent(int id,[FromBody] Student student)
         {
             if (student.Id < 0)
             {
                 return BadRequest();
             }
-            var Existingstudent = dataContext.Students.FirstOrDefault(x => x.Id == student.Id);
+            var Existingstudent = dataContext.Students.FirstOrDefault(x => x.Id == id);
             if (Existingstudent == null)
             {
                 return NotFound(Existingstudent);
             }
             Existingstudent.Name=student.Name;
             Existingstudent.PhoneNo=student.PhoneNo;
-            dataContext.Students.Add(Existingstudent);
+            //dataContext.Students.Add(Existingstudent);
             dataContext.SaveChanges();
             return Ok(student);
         }
