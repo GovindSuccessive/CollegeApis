@@ -1,4 +1,8 @@
 using FirstClassLibrary;
+using FirstClassLibrary.Entity;
+using FirstWebAPiProject.Model.Dto;
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,8 +18,11 @@ option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var app = builder.Build();
+//FluentValidation
+builder.Services.AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<CourseDto>());
 
+var app = builder.Build();
+                                                              
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

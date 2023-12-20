@@ -57,7 +57,10 @@ namespace FirstWebAPiProject.Controllers
             }
             var NewStudent = new Student()
             {
-                Id = dataContext.Students.OrderByDescending(x => x.Id).FirstOrDefault().Id + 1,
+               //if (dataContext.Students != null)
+               //Id = dataContext.Students.OrderByDescending(x => x.Id).FirstOrDefault(0).Id + 1;
+
+
                 Name = student.Name,
                 PhoneNo = student.PhoneNo,
                 Password = student.Password,
@@ -112,3 +115,4 @@ namespace FirstWebAPiProject.Controllers
         }
     }
 }
+ 

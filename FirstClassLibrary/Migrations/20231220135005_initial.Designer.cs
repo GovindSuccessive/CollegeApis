@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FirstClassLibrary.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20231219132727_initial")]
+    [Migration("20231220135005_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -23,6 +23,27 @@ namespace FirstClassLibrary.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("FirstClassLibrary.Entity.Course", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Course", (string)null);
+                });
 
             modelBuilder.Entity("FirstClassLibrary.Entity.Student", b =>
                 {
