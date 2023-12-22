@@ -1,7 +1,9 @@
 ﻿using FirstClassLibrary;
 using FirstClassLibrary.Entity;
+using FirstWebAPiProject.Logger;
 using FirstWebAPiProject.Model.Dto;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FirstWebAPiProject.Controllers
 {
@@ -10,41 +12,51 @@ namespace FirstWebAPiProject.Controllers
     public class StudentController : ControllerBase
     {
         private readonly DataContext dataContext;
+        private readonly IMyLogger _myLogger;
 
-        public StudentController(DataContext dataContext) {
+        public StudentController(DataContext dataContext, IMyLogger myLogger) {
             this.dataContext = dataContext;
+            _myLogger = myLogger;
         }
+
+      /*  public StudentController(IMyLogger myLogger)
+        {
+            _myLogger = myLogger;
+        }*/
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<IEnumerable<Student>> GetStudentList()
+        public async Task<ActionResult<IEnumerable<Student>>> GetStudentList()
         {
-            return Ok(dataContext.Students);
+            var student = await dataContext.Students.ToListAsync();
+            return Ok(student);
         }
 
         [HttpGet("id:int", Name = "GetStudent")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<Student> GetStudentList(int id)
+        public async Task<ActionResult<Student>> GetStudentList(int id)
         {
-            if (id == 0)
+            if (id > dataContext.Students.OrderByDescending(x=>x.Id).First().Id || id < 0)
             {
-                return BadRequest();
+                _myLogger.Log("Id is Invalid while Getting Student By Id");
+                return BadRequest("Id is not exist");
             }
-            var studnet = dataContext.Students.FirstOrDefault(x => x.Id == id);
-            if (studnet == null)
+            var student = await dataContext.Students.FirstOrDefaultAsync(x => x.Id == id);
+            if (student == null)
             {
+                _myLogger.Log("Student is null");
                 return NotFound();
             }
 
-            return Ok(studnet);
+            return Ok(student);
         }
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public ActionResult<StudentDto> CreateStudent([FromBody] StudentDto student)
+        public async Task<ActionResult<StudentDto>> CreateStudent([FromBody] StudentDto student)
         {
             if (student == null)
             {
@@ -69,34 +81,34 @@ namespace FirstWebAPiProject.Controllers
             };
 
             dataContext.Students.Add(NewStudent);
-            dataContext.SaveChanges();
-            return Ok(student);
+            await dataContext.SaveChangesAsync();
+            return Ok("Student is added Successfully");
         }
 
         [HttpDelete]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult DeleteStudent(int id) {
-            if (id < 0)
+        public async Task<ActionResult> DeleteStudent(int id) {
+            if (id > dataContext.Students.OrderByDescending(x=>x.Id).First().Id)
             {
-                return BadRequest();
+                return BadRequest("Id is not exist");
             }
-            var student = dataContext.Students.FirstOrDefault(x => x.Id == id);
+            var student =  dataContext.Students.FirstOrDefault(x=>x.Id == id);
             if (student == null)
             {
                 return NotFound(student);
             }
             dataContext.Students.Remove(student);
-            dataContext.SaveChanges();
-            return Ok(student);
+            await dataContext.SaveChangesAsync();
+            return Ok("Student is deleted Successfully");
         }
 
         [HttpPut("id:int")]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult UpdateStudent(int id,[FromBody] Student student)
+        public async Task<ActionResult> UpdateStudent(int id,[FromBody] Student student)
         {
             if (student.Id < 0)
             {
@@ -109,9 +121,8 @@ namespace FirstWebAPiProject.Controllers
             }
             Existingstudent.Name=student.Name;
             Existingstudent.PhoneNo=student.PhoneNo;
-            //dataContext.Students.Add(Existingstudent);
-            dataContext.SaveChanges();
-            return Ok(student);
+            await dataContext.SaveChangesAsync();
+            return Ok("Student is updated Successfully");
         }
     }
 }

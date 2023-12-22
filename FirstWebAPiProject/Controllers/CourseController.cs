@@ -1,12 +1,16 @@
 ﻿using FirstClassLibrary;
 using FirstClassLibrary.Entity;
 using FirstWebAPiProject.Model.Dto;
+using FirstWebAPiProject.Validation;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace FirstWebAPiProject.Controllers
 {
     [ApiController]
     [Route("api/CourseApi")]
+
     public class CourseController : ControllerBase
     {
         private readonly DataContext dataContext;
@@ -18,57 +22,99 @@ namespace FirstWebAPiProject.Controllers
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<IEnumerable<Course>> GetCourseList()
+        public async Task<ActionResult<IEnumerable<Course>>> GetCourseList()
         {
-            return Ok(dataContext.Courses);
+            var courses = await dataContext.Courses.ToListAsync();
+            return Ok(courses);
         }
 
-        [HttpGet("id:int", Name = "GetCourse")]
+        [HttpGet("{id:int}", Name = "GetCourse")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<Course> GetCourseById(int id)
+        public async Task<ActionResult<Course>> GetCourseById(int id)
         {
             if (id == 0)
             {
                 return BadRequest();
             }
-            var Course = dataContext.Courses.FirstOrDefault(x => x.Id == id);
-            if (Course == null)
+            var course = await dataContext.Courses.FirstOrDefaultAsync(x => x.Id == id);
+            if (course == null)
             {
                 return NotFound();
             }
 
-            return Ok(Course);
+            return Ok(course);
         }
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public ActionResult<CourseDto> CreateCourse([FromBody] CourseDto courseDto)
+        public async Task<ActionResult<CourseDto>> CreateCourse([FromBody] CourseDto courseDto)
         {
             if (courseDto == null)
             {
-                return BadRequest(courseDto);
+                return BadRequest("Course data is null");
             }
-            //student.Id = StudentStore.studentList.OrderByDescending(x => x.Id).FirstOrDefault().Id+1;
-            if (!ModelState.IsValid)
+
+            var validator = new CourseValidator();
+            var validationResult = validator.Validate(courseDto);
+
+            if (!validationResult.IsValid)
             {
-                return BadRequest();
+                return BadRequest(validationResult.Errors);
             }
-            var NewCourse = new Course()
+            var newCourse = new Course()
             {
-                //if (dataContext.Students != null)
-                //Id = dataContext.Students.OrderByDescending(x => x.Id).FirstOrDefault(0).Id + 1;
-
-
                 Name = courseDto.Name,
                 Description = courseDto.Description,
             };
 
-            dataContext.Courses.Add(NewCourse);
-            dataContext.SaveChanges();
-            return Ok();
+            dataContext.Courses.Add(newCourse);
+            await dataContext.SaveChangesAsync();
+            return Ok("Course is added successfully");
         }
-    }
+
+        [HttpDelete]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> DeleteCourse(int id)
+        {
+            if (id < 0)
+            {
+                return BadRequest();
+            }
+            var course = dataContext.Courses.FirstOrDefault(x => x.Id == id);
+            if (course == null)
+            {
+                return NotFound(course);
+            }
+            dataContext.Courses.Remove(course);
+            await dataContext.SaveChangesAsync();
+            return Ok("Course is Deleted Successfully");
+        }
+
+        [HttpPut("id:int")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> UpdateCourse(int id, [FromBody] Course course)
+        {
+            if (course.Id < 0)
+            {
+                return BadRequest();
+            }
+            var ExistingCourse = dataContext.Courses.FirstOrDefault(x => x.Id == id);
+            if (ExistingCourse == null)
+            {
+                return NotFound(ExistingCourse);
+            }
+            ExistingCourse.Name = course.Name;
+            ExistingCourse.Description= course.Description;
+            await dataContext.SaveChangesAsync();
+            return Ok("Course is updated Successfully");
+        }
+    }    
+
 }

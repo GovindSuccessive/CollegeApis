@@ -1,5 +1,6 @@
 using FirstClassLibrary;
 using FirstClassLibrary.Entity;
+using FirstWebAPiProject.Logger;
 using FirstWebAPiProject.Model.Dto;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
@@ -20,6 +21,13 @@ builder.Services.AddSwaggerGen();
 
 //FluentValidation
 builder.Services.AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<CourseDto>());
+
+
+//Creating Logger using Depency Injection
+
+builder.Services.AddScoped<IMyLogger, MyLogger>();
+builder.Services.AddScoped<MyLogger>();
+
 
 var app = builder.Build();
                                                               

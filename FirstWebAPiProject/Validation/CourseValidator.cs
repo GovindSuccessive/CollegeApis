@@ -1,16 +1,17 @@
 ﻿using FirstClassLibrary.Entity;
+using FirstWebAPiProject.Model.Dto;
 using FluentValidation;
+using Microsoft.AspNetCore.Http.HttpResults;
 using System.ComponentModel.DataAnnotations;
 
 namespace FirstWebAPiProject.Validation
 {
-    public class CourseValidator: AbstractValidator<Course>
+    public class CourseValidator: AbstractValidator<CourseDto>
     {
         public CourseValidator()
         {
             RuleFor(c => c.Name)
-                .NotEmpty().WithMessage("Name Do not Empty")
-                .MinimumLength(8).WithMessage("Name Length Should be Greater than 8 Character")
+                .NotEmpty().WithMessage("Name Do not Empty").WithErrorCode("404")
                 .MaximumLength(20).WithMessage("Name Length Should be Smaller than 20 Character")
                 .NotNull().WithMessage("Name Should not be empty");
 
