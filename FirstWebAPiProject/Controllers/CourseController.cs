@@ -4,6 +4,7 @@ using FirstWebAPiProject.Model.Dto;
 using FirstWebAPiProject.Validation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System.ComponentModel.DataAnnotations;
 
 namespace FirstWebAPiProject.Controllers
@@ -25,6 +26,7 @@ namespace FirstWebAPiProject.Controllers
         public async Task<ActionResult<IEnumerable<Course>>> GetCourseList()
         {
             var courses = await dataContext.Courses.ToListAsync();
+            Log.Information("Course List => {@result}",courses);
             return Ok(courses);
         }
 

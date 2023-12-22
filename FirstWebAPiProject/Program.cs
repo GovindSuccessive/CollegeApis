@@ -5,6 +5,7 @@ using FirstWebAPiProject.Model.Dto;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +28,13 @@ builder.Services.AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyCont
 
 builder.Services.AddScoped<IMyLogger, MyLogger>();
 builder.Services.AddScoped<MyLogger>();
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console()
+    .WriteTo.File("log/SchoolDb_Log-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
 
 
 var app = builder.Build();
